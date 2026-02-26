@@ -1,0 +1,147 @@
+@import "tailwindcss";
+
+:root {
+  font-family: "IBM Plex Sans", "SF Pro Text", "Segoe UI", sans-serif;
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+.react-flow__node-stateNode {
+  cursor: grab;
+  transition: transform 120ms ease-out, filter 160ms ease, box-shadow 160ms ease;
+}
+
+.react-flow__node-stateNode:hover {
+  filter: drop-shadow(0 8px 18px rgb(2 6 23 / 0.45));
+}
+
+.react-flow__node-stateNode.dragging {
+  cursor: grabbing;
+  transition: none;
+  filter: drop-shadow(0 12px 28px rgb(8 47 73 / 0.5));
+}
+
+.rf-node-current {
+  box-shadow: 0 0 0 3px rgb(45 212 191 / 0.45), 0 0 26px rgb(45 212 191 / 0.42);
+  animation: rf-node-pulse 1.35s ease-in-out infinite;
+}
+
+.rf-node-connecting {
+  box-shadow: 0 0 0 3px rgb(103 232 249 / 0.45), 0 0 22px rgb(34 211 238 / 0.4);
+}
+
+.rf-edge-active path {
+  stroke: rgb(94 234 212) !important;
+  stroke-width: 3.2;
+}
+
+.react-flow__edge-path {
+  transition: stroke 180ms ease, stroke-width 180ms ease, filter 180ms ease;
+}
+
+.rf-edge-flow {
+  animation: rf-edge-flow 0.95s linear infinite;
+}
+
+.react-flow__connection-path {
+  stroke: rgb(103 232 249);
+  stroke-width: 2.4;
+  stroke-dasharray: 9 6;
+  animation: rf-edge-flow 0.95s linear infinite;
+}
+
+.code-viewer {
+  height: calc(100% - 2rem);
+  overflow: auto;
+  margin: 0;
+  border: 1px solid rgb(51 65 85 / 0.8);
+  border-radius: 0.5rem;
+  background: linear-gradient(160deg, rgb(2 6 23), rgb(15 23 42));
+  font-family: "IBM Plex Mono", "SF Mono", Menlo, monospace;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.code-line {
+  display: grid;
+  grid-template-columns: 3.2rem 1fr;
+  min-height: 1.4rem;
+}
+
+.code-line-number {
+  display: inline-flex;
+  justify-content: flex-end;
+  padding: 0 0.75rem 0 0.5rem;
+  color: rgb(148 163 184 / 0.9);
+  user-select: none;
+  border-right: 1px solid rgb(51 65 85 / 0.55);
+  background: rgb(2 6 23 / 0.7);
+}
+
+.code-line-content {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  white-space: pre;
+  padding: 0 0.75rem;
+  color: rgb(226 232 240);
+}
+
+.code-token {
+  white-space: pre;
+}
+
+.code-token-space {
+  white-space: pre;
+}
+
+.code-token-comment {
+  color: rgb(148 163 184);
+}
+
+.code-token-string {
+  color: rgb(134 239 172);
+}
+
+.code-token-keyword {
+  color: rgb(125 211 252);
+}
+
+.code-token-builtin {
+  color: rgb(196 181 253);
+}
+
+.code-token-number {
+  color: rgb(250 204 21);
+}
+
+.code-token-operator {
+  color: rgb(248 250 252 / 0.9);
+}
+
+@keyframes rf-node-pulse {
+  0% {
+    box-shadow: 0 0 0 2px rgb(45 212 191 / 0.2), 0 0 12px rgb(45 212 191 / 0.16);
+  }
+  65% {
+    box-shadow: 0 0 0 5px rgb(45 212 191 / 0.52), 0 0 32px rgb(45 212 191 / 0.45);
+  }
+  100% {
+    box-shadow: 0 0 0 2px rgb(45 212 191 / 0.2), 0 0 12px rgb(45 212 191 / 0.16);
+  }
+}
+
+@keyframes rf-edge-flow {
+  from {
+    stroke-dashoffset: 0;
+  }
+  to {
+    stroke-dashoffset: -34;
+  }
+}

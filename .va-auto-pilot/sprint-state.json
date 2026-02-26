@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "projectPrefix": "FLUX",
+  "updatedAt": "2026-02-26",
+  "tasks": [
+    {
+      "id": "FLUX-001",
+      "title": "Replace with your first deliverable",
+      "priority": "P1",
+      "state": "Backlog",
+      "owner": "VA Auto-Pilot",
+      "source": "bootstrap",
+      "createdAt": "2026-02-26",
+      "startedAt": "",
+      "completedAt": "",
+      "lastFailedAt": "",
+      "failCount": 0,
+      "reason": "",
+      "verification": "",
+      "notes": "",
+      "review": {
+        "implementer": "",
+        "security": "",
+        "qa": "",
+        "domain": "",
+        "architect": ""
+      },
+      "testing": {
+        "flow": "feature-smoke",
+        "mustPassRate": "",
+        "shouldPassRate": ""
+      }
+    }
+  ]
+}
