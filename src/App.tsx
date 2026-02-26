@@ -18,6 +18,7 @@ import ReactFlow, {
 import { StateNodeView } from './components/StateNode';
 import { TransitionEdgeView } from './components/TransitionEdge';
 import { CodeViewer } from './components/CodeViewer';
+import { SplashScreen } from './components/SplashScreen';
 import {
   cloneValue,
   createHistoryState,
@@ -53,6 +54,18 @@ const edgeTypes = {
 const ARROW_MARKER = { type: MarkerType.ArrowClosed } as const;
 const SNAP_GRID: [number, number] = [24, 24];
 const DEFAULT_TRANSITION_DATA = { event: 'EVENT', guard: '', actions: [] as string[] };
+const BUTTON_BASE_CLASS =
+  'cursor-pointer rounded-md border px-3 py-2 text-sm transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 disabled:hover:translate-y-0 disabled:active:scale-100';
+const BUTTON_SECONDARY_CLASS =
+  `${BUTTON_BASE_CLASS} border-slate-700 bg-slate-800 hover:border-slate-500 hover:bg-slate-700`;
+const BUTTON_PRIMARY_CLASS =
+  `${BUTTON_BASE_CLASS} border-cyan-700 bg-cyan-900/40 hover:border-cyan-500 hover:bg-cyan-800/50`;
+const BUTTON_DANGER_CLASS =
+  `${BUTTON_BASE_CLASS} border-red-700 bg-red-900/30 hover:border-red-500 hover:bg-red-800/50`;
+const FIELD_CLASS =
+  'w-full rounded border border-slate-700 bg-slate-900 px-2 py-2 text-sm text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70';
+const FIELD_COMPACT_CLASS =
+  'mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70';
 type HistoryMode = 'push' | 'replace' | 'transient';
 
 function normalizeNode(node: Node<StateNode['data']>): StateNode {
@@ -688,391 +701,423 @@ function App() {
   );
 
   return (
-    <div className="flex h-full w-full overflow-hidden bg-slate-950 text-slate-100">
-      <aside className="flex w-[320px] shrink-0 flex-col gap-3 border-r border-slate-800 bg-slate-900/80 p-4">
-        <div>
-          <h1 className="text-lg font-semibold tracking-tight">FluxState</h1>
-          <p className="text-xs text-slate-400">Visual state machine designer and code generator</p>
-        </div>
+    <SplashScreen>
+      <div className="flex h-full w-full flex-col overflow-hidden bg-slate-950 text-slate-100 md:flex-row">
+        <aside className="flex w-full shrink-0 flex-col gap-3 overflow-y-auto border-b border-slate-800 bg-slate-900/80 p-4 md:w-[320px] md:border-b-0 md:border-r">
+          <div>
+            <h1 className="text-lg font-semibold tracking-tight">FluxState</h1>
+            <p className="text-xs text-slate-400">Visual state machine designer and code generator</p>
+          </div>
 
-        <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-          <label className="block text-xs uppercase tracking-wide text-slate-400">Examples</label>
-          <select
-            className="w-full rounded-md border border-slate-700 bg-slate-900 px-2 py-2 text-sm"
-            value={selectedExampleId}
-            onChange={(event) => handleLoadExample(event.target.value)}
-          >
-            {exampleMachines.map((example) => (
-              <option value={example.id} key={example.id}>
-                {example.name}
-              </option>
-            ))}
-          </select>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={undo}
-            disabled={!canUndo}
-          >
-            Undo
-          </button>
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={redo}
-            disabled={!canRedo}
-          >
-            Redo
-          </button>
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={handleAutoLayout}
-          >
-            Auto Layout
-          </button>
-          <button
-            className={`rounded-md border px-3 py-2 text-sm ${
-              isSimulationMode
-                ? 'border-emerald-500 bg-emerald-700/30 text-emerald-200'
-                : 'border-slate-700 bg-slate-800 hover:bg-slate-700'
-            }`}
-            onClick={handleToggleSimulation}
-          >
-            {isSimulationMode ? 'Stop Sim' : 'Simulate'}
-          </button>
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={() => setShowCodePanel((value) => !value)}
-          >
-            Generate Code
-          </button>
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={handleExportJson}
-          >
-            Export JSON
-          </button>
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={() => {
-              setJsonPayload('');
-              setJsonDialogMode('import');
-            }}
-          >
-            Import JSON
-          </button>
-          <button
-            className="rounded-md border border-slate-700 bg-slate-800 px-3 py-2 text-sm hover:bg-slate-700"
-            onClick={() => fileInputRef.current?.click()}
-          >
-            Import File
-          </button>
-          <label className="col-span-2 flex items-center justify-between rounded-md border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
-            <span>Snap to grid</span>
-            <input
-              type="checkbox"
-              checked={snapToGrid}
-              onChange={(event) => setSnapToGrid(event.target.checked)}
-              className="h-4 w-4 accent-cyan-400"
-            />
-          </label>
-        </div>
-
-        <input
-          ref={fileInputRef}
-          type="file"
-          className="hidden"
-          accept="application/json"
-          onChange={handleImportFile}
-        />
-
-        {isSimulationMode && (
-          <div className="space-y-2 rounded-lg border border-emerald-800/70 bg-emerald-950/40 p-3">
-            <div className="text-xs uppercase tracking-wide text-emerald-200">Simulation Events</div>
-            <div className="flex flex-wrap gap-2">
-              {availableEvents.length === 0 && (
-                <div className="text-xs text-slate-300">No outgoing events from active state.</div>
-              )}
-              {availableEvents.map((eventType) => (
-                <button
-                  key={eventType}
-                  className="rounded-md border border-emerald-600 bg-emerald-800/40 px-2 py-1 text-xs hover:bg-emerald-700/50"
-                  onClick={() => handleSimulationEvent(eventType)}
-                >
-                  {eventType}
-                </button>
+          <div className="space-y-2 rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+            <label className="block text-xs uppercase tracking-wide text-slate-400">Examples</label>
+            <select
+              aria-label="Choose an example machine"
+              className={FIELD_CLASS}
+              value={selectedExampleId}
+              onChange={(event) => handleLoadExample(event.target.value)}
+            >
+              {exampleMachines.map((example) => (
+                <option value={example.id} key={example.id}>
+                  {example.name}
+                </option>
               ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              aria-label="Undo last edit"
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={undo}
+              disabled={!canUndo}
+            >
+              Undo
+            </button>
+            <button
+              aria-label="Redo last edit"
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={redo}
+              disabled={!canRedo}
+            >
+              Redo
+            </button>
+            <button
+              aria-label="Auto layout nodes"
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={handleAutoLayout}
+            >
+              Auto Layout
+            </button>
+            <button
+              aria-label={isSimulationMode ? 'Stop simulation mode' : 'Start simulation mode'}
+              className={
+                isSimulationMode
+                  ? `${BUTTON_BASE_CLASS} border-emerald-500 bg-emerald-700/30 text-emerald-200 hover:border-emerald-400 hover:bg-emerald-700/45`
+                  : BUTTON_SECONDARY_CLASS
+              }
+              onClick={handleToggleSimulation}
+            >
+              {isSimulationMode ? 'Stop Sim' : 'Simulate'}
+            </button>
+            <button
+              aria-label={showCodePanel ? 'Hide generated code panel' : 'Show generated code panel'}
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={() => setShowCodePanel((value) => !value)}
+            >
+              Generate Code
+            </button>
+            <button
+              aria-label="Export JSON"
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={handleExportJson}
+            >
+              Export JSON
+            </button>
+            <button
+              aria-label="Open JSON import dialog"
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={() => {
+                setJsonPayload('');
+                setJsonDialogMode('import');
+              }}
+            >
+              Import JSON
+            </button>
+            <button
+              aria-label="Import JSON from file"
+              className={BUTTON_SECONDARY_CLASS}
+              onClick={() => fileInputRef.current?.click()}
+            >
+              Import File
+            </button>
+            <label className="col-span-2 flex cursor-pointer items-center justify-between rounded-md border border-slate-700 bg-slate-900/60 px-3 py-2 text-xs text-slate-300">
+              <span>Snap to grid</span>
+              <input
+                aria-label="Toggle snap to grid"
+                type="checkbox"
+                checked={snapToGrid}
+                onChange={(event) => setSnapToGrid(event.target.checked)}
+                className="h-4 w-4 accent-cyan-400"
+              />
+            </label>
+          </div>
+
+          <input
+            ref={fileInputRef}
+            aria-label="Import machine file"
+            type="file"
+            className="hidden"
+            accept="application/json"
+            onChange={handleImportFile}
+          />
+
+          {isSimulationMode && (
+            <div className="space-y-2 rounded-lg border border-emerald-800/70 bg-emerald-950/40 p-3">
+              <div className="text-xs uppercase tracking-wide text-emerald-200">Simulation Events</div>
+              <div className="flex flex-wrap gap-2">
+                {availableEvents.length === 0 && (
+                  <div className="text-xs text-slate-300">No outgoing events from active state.</div>
+                )}
+                {availableEvents.map((eventType) => (
+                  <button
+                    key={eventType}
+                    aria-label={`Trigger simulation event ${eventType}`}
+                    className={`${BUTTON_BASE_CLASS} border-emerald-600 bg-emerald-800/40 px-2 py-1 text-xs hover:border-emerald-500 hover:bg-emerald-700/50`}
+                    onClick={() => handleSimulationEvent(eventType)}
+                  >
+                    {eventType}
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs text-emerald-200/80">Active: {activeLeafIds.join(', ') || 'none'}</div>
             </div>
-            <div className="text-xs text-emerald-200/80">Active: {activeLeafIds.join(', ') || 'none'}</div>
+          )}
+
+          <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-800 bg-slate-950/60 p-3">
+            <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">Selection</div>
+            {!selectedNode && !selectedEdge && (
+              <div className="text-sm text-slate-400">Select a node or right-click an edge to edit.</div>
+            )}
+
+            {selectedNode && (
+              <div className="space-y-2 overflow-auto pr-1">
+                <div className="text-sm font-medium">Node: {selectedNode.id}</div>
+                <label className="block text-xs text-slate-300">
+                  Label
+                  <input
+                    aria-label="Node label"
+                    value={selectedNode.data.label}
+                    onChange={(event) => handleNodePatch({ label: event.target.value })}
+                    className={FIELD_COMPACT_CLASS}
+                  />
+                </label>
+                <label className="block text-xs text-slate-300">
+                  Kind
+                  <select
+                    aria-label="Node kind"
+                    value={selectedNode.data.kind}
+                    onChange={(event) =>
+                      handleNodePatch({ kind: event.target.value as StateNode['data']['kind'] })
+                    }
+                    className={FIELD_COMPACT_CLASS}
+                  >
+                    <option value="atomic">Atomic</option>
+                    <option value="initial">Initial Marker</option>
+                    <option value="final">Final Marker</option>
+                    <option value="parallel">Parallel Region</option>
+                  </select>
+                </label>
+                <label className="block text-xs text-slate-300">
+                  Parent
+                  <select
+                    aria-label="Parent state"
+                    value={selectedNode.parentNode ?? ''}
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      handleNodePatch({ parentNode: value || null });
+                    }}
+                    className={FIELD_COMPACT_CLASS}
+                  >
+                    <option value="">(root)</option>
+                    {parentCandidates.map((node) => (
+                      <option key={node.id} value={node.id}>
+                        {node.data.label} ({node.id})
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <button
+                  aria-label="Add child state"
+                  className={`${BUTTON_PRIMARY_CLASS} w-full px-2 py-1`}
+                  onClick={handleAddChildNode}
+                >
+                  Add Child State
+                </button>
+              </div>
+            )}
+
+            {selectedEdge && !selectedNode && (
+              <div className="space-y-2 text-sm text-slate-300">
+                <div className="font-medium">Transition: {selectedEdge.id}</div>
+                <div>{edgeLabel(selectedEdge)}</div>
+                <div className="text-xs text-slate-400">Right-click edge on canvas to edit guard/actions.</div>
+              </div>
+            )}
+          </div>
+        </aside>
+
+        <main className="relative min-h-[45vh] flex-1">
+          <ReactFlow
+            aria-label="State machine canvas"
+            nodes={renderNodes}
+            edges={renderEdges}
+            nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
+            defaultEdgeOptions={{ type: 'transitionEdge', markerEnd: ARROW_MARKER }}
+            connectionLineType={ConnectionLineType.Bezier}
+            connectionLineStyle={{ stroke: '#67e8f9', strokeWidth: 2.4 }}
+            snapToGrid={snapToGrid}
+            snapGrid={SNAP_GRID}
+            onInit={setReactFlowInstance}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
+            onConnect={onConnect}
+            onConnectStart={(_, params) => setConnectingFromNodeId(params.nodeId ?? null)}
+            onConnectEnd={() => setConnectingFromNodeId(null)}
+            onNodeClick={(_, node) => {
+              setSelectedNodeId(node.id);
+              setEdgeMenu(null);
+            }}
+            onEdgeContextMenu={onEdgeContextMenu}
+            onPaneClick={(event) => {
+              if (event.detail === 2) {
+                createNodeAtPointer(event);
+                return;
+              }
+              setSelectedNodeId(null);
+              setEdgeMenu(null);
+            }}
+            onMoveEnd={(_, viewport) => {
+              updateMachine(
+                (current) => ({
+                  ...current,
+                  viewport,
+                }),
+                'replace',
+              );
+            }}
+            minZoom={0.2}
+            maxZoom={2}
+            proOptions={{ hideAttribution: true }}
+            fitView
+            fitViewOptions={{ padding: 0.12 }}
+            defaultViewport={machine.viewport}
+            className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
+          >
+            <MiniMap
+              pannable
+              zoomable
+              className="!bg-slate-900/80"
+              nodeColor={(node) => {
+                const kind = (node.data as StateNode['data']).kind;
+                if (kind === 'initial') return '#e2e8f0';
+                if (kind === 'final') return '#94a3b8';
+                if (kind === 'parallel') return '#10b981';
+                return '#0ea5e9';
+              }}
+            />
+            <Background color="#334155" gap={24} />
+            <Controls className="!border !border-slate-700 !bg-slate-900/80" />
+          </ReactFlow>
+        </main>
+
+        {edgeMenu && (
+          <div
+            data-edge-menu
+            className="fixed z-20 w-[320px] rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-2xl"
+            style={{ left: edgeMenu.x + 6, top: edgeMenu.y + 6 }}
+          >
+            <div className="mb-2 text-sm font-semibold">Transition Settings</div>
+            <label className="mb-2 block text-xs text-slate-300">
+              Event
+              <input
+                aria-label="Transition event name"
+                value={edgeEvent}
+                onChange={(event) => setEdgeEvent(event.target.value)}
+                className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+              />
+            </label>
+            <label className="mb-2 block text-xs text-slate-300">
+              Guard condition
+              <input
+                aria-label="Transition guard condition"
+                value={edgeGuard}
+                onChange={(event) => setEdgeGuard(event.target.value)}
+                className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                placeholder="event.type === 'SUBMIT'"
+              />
+            </label>
+            <label className="mb-3 block text-xs text-slate-300">
+              Actions (comma separated)
+              <input
+                aria-label="Transition actions"
+                value={edgeActions}
+                onChange={(event) => setEdgeActions(event.target.value)}
+                className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                placeholder="logTransition, notify"
+              />
+            </label>
+            <div className="flex gap-2">
+              <button
+                aria-label="Save transition settings"
+                className={`${BUTTON_PRIMARY_CLASS} flex-1 px-2 py-1`}
+                onClick={handleApplyEdgeChanges}
+              >
+                Save
+              </button>
+              <button
+                aria-label="Delete transition"
+                className={`${BUTTON_DANGER_CLASS} px-2 py-1`}
+                onClick={handleDeleteEdge}
+              >
+                Delete
+              </button>
+            </div>
           </div>
         )}
 
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden rounded-lg border border-slate-800 bg-slate-950/60 p-3">
-          <div className="mb-2 text-xs uppercase tracking-wide text-slate-400">Selection</div>
-          {!selectedNode && !selectedEdge && (
-            <div className="text-sm text-slate-400">Select a node or right-click an edge to edit.</div>
-          )}
-
-          {selectedNode && (
-            <div className="space-y-2 overflow-auto pr-1">
-              <div className="text-sm font-medium">Node: {selectedNode.id}</div>
-              <label className="block text-xs text-slate-300">
-                Label
-                <input
-                  value={selectedNode.data.label}
-                  onChange={(event) => handleNodePatch({ label: event.target.value })}
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                />
-              </label>
-              <label className="block text-xs text-slate-300">
-                Kind
+        {showCodePanel && (
+          <div className="fixed inset-x-3 top-3 z-20 h-[80vh] rounded-xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl md:inset-x-auto md:right-4 md:w-[44vw] md:min-w-[480px]">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-sm font-semibold">Generated TypeScript</div>
+              <div className="flex items-center gap-2">
                 <select
-                  value={selectedNode.data.kind}
-                  onChange={(event) =>
-                    handleNodePatch({ kind: event.target.value as StateNode['data']['kind'] })
-                  }
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
+                  aria-label="Code generation target"
+                  className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs text-slate-100 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                  value={codeTarget}
+                  onChange={(event) => setCodeTarget(event.target.value as CodeTarget)}
                 >
-                  <option value="atomic">Atomic</option>
-                  <option value="initial">Initial Marker</option>
-                  <option value="final">Final Marker</option>
-                  <option value="parallel">Parallel Region</option>
+                  <option value="xstate">XState v5</option>
+                  <option value="switch">TypeScript Enum + Switch</option>
+                  <option value="zustand">Zustand Store</option>
                 </select>
-              </label>
-              <label className="block text-xs text-slate-300">
-                Parent
-                <select
-                  value={selectedNode.parentNode ?? ''}
-                  onChange={(event) => {
-                    const value = event.target.value;
-                    handleNodePatch({ parentNode: value || null });
-                  }}
-                  className="mt-1 w-full rounded border border-slate-700 bg-slate-900 px-2 py-1 text-sm"
-                >
-                  <option value="">(root)</option>
-                  {parentCandidates.map((node) => (
-                    <option key={node.id} value={node.id}>
-                      {node.data.label} ({node.id})
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <button
-                className="w-full rounded border border-cyan-700 bg-cyan-900/40 px-2 py-1 text-sm hover:bg-cyan-800/50"
-                onClick={handleAddChildNode}
-              >
-                Add Child State
-              </button>
-            </div>
-          )}
-
-          {selectedEdge && !selectedNode && (
-            <div className="space-y-2 text-sm text-slate-300">
-              <div className="font-medium">Transition: {selectedEdge.id}</div>
-              <div>{edgeLabel(selectedEdge)}</div>
-              <div className="text-xs text-slate-400">Right-click edge on canvas to edit guard/actions.</div>
-            </div>
-          )}
-        </div>
-      </aside>
-
-      <main className="relative flex-1">
-        <ReactFlow
-          nodes={renderNodes}
-          edges={renderEdges}
-          nodeTypes={nodeTypes}
-          edgeTypes={edgeTypes}
-          defaultEdgeOptions={{ type: 'transitionEdge', markerEnd: ARROW_MARKER }}
-          connectionLineType={ConnectionLineType.Bezier}
-          connectionLineStyle={{ stroke: '#67e8f9', strokeWidth: 2.4 }}
-          snapToGrid={snapToGrid}
-          snapGrid={SNAP_GRID}
-          onInit={setReactFlowInstance}
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-          onConnect={onConnect}
-          onConnectStart={(_, params) => setConnectingFromNodeId(params.nodeId ?? null)}
-          onConnectEnd={() => setConnectingFromNodeId(null)}
-          onNodeClick={(_, node) => {
-            setSelectedNodeId(node.id);
-            setEdgeMenu(null);
-          }}
-          onEdgeContextMenu={onEdgeContextMenu}
-          onPaneClick={(event) => {
-            if (event.detail === 2) {
-              createNodeAtPointer(event);
-              return;
-            }
-            setSelectedNodeId(null);
-            setEdgeMenu(null);
-          }}
-          onMoveEnd={(_, viewport) => {
-            updateMachine(
-              (current) => ({
-                ...current,
-                viewport,
-              }),
-              'replace',
-            );
-          }}
-          minZoom={0.2}
-          maxZoom={2}
-          proOptions={{ hideAttribution: true }}
-          fitView
-          fitViewOptions={{ padding: 0.12 }}
-          defaultViewport={machine.viewport}
-          className="bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950"
-        >
-          <MiniMap
-            pannable
-            zoomable
-            className="!bg-slate-900/80"
-            nodeColor={(node) => {
-              const kind = (node.data as StateNode['data']).kind;
-              if (kind === 'initial') return '#e2e8f0';
-              if (kind === 'final') return '#94a3b8';
-              if (kind === 'parallel') return '#10b981';
-              return '#0ea5e9';
-            }}
-          />
-          <Background color="#334155" gap={24} />
-          <Controls className="!border !border-slate-700 !bg-slate-900/80" />
-        </ReactFlow>
-      </main>
-
-      {edgeMenu && (
-        <div
-          data-edge-menu
-          className="fixed z-20 w-[320px] rounded-lg border border-slate-700 bg-slate-900 p-3 shadow-2xl"
-          style={{ left: edgeMenu.x + 6, top: edgeMenu.y + 6 }}
-        >
-          <div className="mb-2 text-sm font-semibold">Transition Settings</div>
-          <label className="mb-2 block text-xs text-slate-300">
-            Event
-            <input
-              value={edgeEvent}
-              onChange={(event) => setEdgeEvent(event.target.value)}
-              className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
-            />
-          </label>
-          <label className="mb-2 block text-xs text-slate-300">
-            Guard condition
-            <input
-              value={edgeGuard}
-              onChange={(event) => setEdgeGuard(event.target.value)}
-              className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
-              placeholder="event.type === 'SUBMIT'"
-            />
-          </label>
-          <label className="mb-3 block text-xs text-slate-300">
-            Actions (comma separated)
-            <input
-              value={edgeActions}
-              onChange={(event) => setEdgeActions(event.target.value)}
-              className="mt-1 w-full rounded border border-slate-700 bg-slate-950 px-2 py-1 text-sm"
-              placeholder="logTransition, notify"
-            />
-          </label>
-          <div className="flex gap-2">
-            <button
-              className="flex-1 rounded border border-cyan-700 bg-cyan-900/40 px-2 py-1 text-sm hover:bg-cyan-800/50"
-              onClick={handleApplyEdgeChanges}
-            >
-              Save
-            </button>
-            <button
-              className="rounded border border-red-700 bg-red-900/30 px-2 py-1 text-sm hover:bg-red-800/50"
-              onClick={handleDeleteEdge}
-            >
-              Delete
-            </button>
-          </div>
-        </div>
-      )}
-
-      {showCodePanel && (
-        <div className="fixed right-4 top-4 z-20 h-[80vh] w-[44vw] min-w-[480px] rounded-xl border border-slate-700 bg-slate-900/95 p-3 shadow-2xl">
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div className="text-sm font-semibold">Generated TypeScript</div>
-            <div className="flex items-center gap-2">
-              <select
-                className="rounded border border-slate-700 bg-slate-950 px-2 py-1 text-xs"
-                value={codeTarget}
-                onChange={(event) => setCodeTarget(event.target.value as CodeTarget)}
-              >
-                <option value="xstate">XState v5</option>
-                <option value="switch">TypeScript Enum + Switch</option>
-                <option value="zustand">Zustand Store</option>
-              </select>
-              <button
-                className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700"
-                onClick={() => void navigator.clipboard.writeText(generatedCode)}
-              >
-                Copy
-              </button>
-              <button
-                className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs hover:bg-slate-700"
-                onClick={() => setShowCodePanel(false)}
-              >
-                Close
-              </button>
-            </div>
-          </div>
-          <CodeViewer code={generatedCode} />
-        </div>
-      )}
-
-      {jsonDialogMode && (
-        <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/70">
-          <div className="h-[78vh] w-[70vw] rounded-xl border border-slate-700 bg-slate-900 p-4 shadow-2xl">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-sm font-semibold">
-                {jsonDialogMode === 'export' ? 'XState-Compatible JSON Export' : 'Import JSON'}
-              </div>
-              <button
-                className="rounded border border-slate-700 bg-slate-800 px-2 py-1 text-xs"
-                onClick={() => setJsonDialogMode(null)}
-              >
-                Close
-              </button>
-            </div>
-            <textarea
-              value={jsonPayload}
-              onChange={(event) => setJsonPayload(event.target.value)}
-              readOnly={jsonDialogMode === 'export'}
-              className="h-[calc(100%-4.5rem)] w-full resize-none rounded border border-slate-700 bg-slate-950 p-3 font-mono text-xs text-slate-200"
-              placeholder="Paste XState JSON here"
-            />
-            <div className="mt-3 flex justify-end gap-2">
-              {jsonDialogMode === 'export' ? (
-                <>
-                  <button
-                    className="rounded border border-slate-700 bg-slate-800 px-3 py-1 text-xs hover:bg-slate-700"
-                    onClick={() => void navigator.clipboard.writeText(jsonPayload)}
-                  >
-                    Copy JSON
-                  </button>
-                  <button
-                    className="rounded border border-cyan-700 bg-cyan-900/40 px-3 py-1 text-xs hover:bg-cyan-800/50"
-                    onClick={handleDownloadExport}
-                  >
-                    Download
-                  </button>
-                </>
-              ) : (
                 <button
-                  className="rounded border border-cyan-700 bg-cyan-900/40 px-3 py-1 text-xs hover:bg-cyan-800/50"
-                  onClick={handleImportSubmit}
+                  aria-label="Copy generated code"
+                  className={`${BUTTON_SECONDARY_CLASS} px-2 py-1 text-xs`}
+                  onClick={() => void navigator.clipboard.writeText(generatedCode)}
                 >
-                  Import
+                  Copy
                 </button>
-              )}
+                <button
+                  aria-label="Close code panel"
+                  className={`${BUTTON_SECONDARY_CLASS} px-2 py-1 text-xs`}
+                  onClick={() => setShowCodePanel(false)}
+                >
+                  Close
+                </button>
+              </div>
+            </div>
+            <CodeViewer code={generatedCode} />
+          </div>
+        )}
+
+        {jsonDialogMode && (
+          <div className="fixed inset-0 z-30 flex items-center justify-center bg-slate-950/70 p-3">
+            <div className="h-[78vh] w-[92vw] max-w-[980px] rounded-xl border border-slate-700 bg-slate-900 p-4 shadow-2xl md:w-[70vw]">
+              <div className="mb-2 flex items-center justify-between">
+                <div className="text-sm font-semibold">
+                  {jsonDialogMode === 'export' ? 'XState-Compatible JSON Export' : 'Import JSON'}
+                </div>
+                <button
+                  aria-label="Close JSON dialog"
+                  className={`${BUTTON_SECONDARY_CLASS} px-2 py-1 text-xs`}
+                  onClick={() => setJsonDialogMode(null)}
+                >
+                  Close
+                </button>
+              </div>
+              <textarea
+                aria-label="Machine JSON payload"
+                value={jsonPayload}
+                onChange={(event) => setJsonPayload(event.target.value)}
+                readOnly={jsonDialogMode === 'export'}
+                className="h-[calc(100%-4.5rem)] w-full resize-none rounded border border-slate-700 bg-slate-950 p-3 font-mono text-xs text-slate-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/70"
+                placeholder="Paste XState JSON here"
+              />
+              <div className="mt-3 flex justify-end gap-2">
+                {jsonDialogMode === 'export' ? (
+                  <>
+                    <button
+                      aria-label="Copy JSON payload"
+                      className={`${BUTTON_SECONDARY_CLASS} px-3 py-1 text-xs`}
+                      onClick={() => void navigator.clipboard.writeText(jsonPayload)}
+                    >
+                      Copy JSON
+                    </button>
+                    <button
+                      aria-label="Download JSON payload"
+                      className={`${BUTTON_PRIMARY_CLASS} px-3 py-1 text-xs`}
+                      onClick={handleDownloadExport}
+                    >
+                      Download
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    aria-label="Import JSON payload"
+                    className={`${BUTTON_PRIMARY_CLASS} px-3 py-1 text-xs`}
+                    onClick={handleImportSubmit}
+                  >
+                    Import
+                  </button>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      )}
-    </div>
+        )}
+      </div>
+    </SplashScreen>
   );
 }
 
